@@ -31,12 +31,16 @@ st.markdown(
         border: 1px solid #dfe6ee;
         border-radius: 12px;
         padding: 1rem;
-        box-shadow: 0 6px 16px rgba(255, 255, 255, 0.18);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
     }
     div[data-testid="stMetric"] [data-testid="stMetricLabel"],
     div[data-testid="stMetric"] [data-testid="stMetricValue"],
     div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
         color: #003f5c;
+    }
+    div[data-testid="stMetric"] [data-testid="stMetricLabel"] {
+        font-weight: 700;
+        text-transform: capitalize;
     }
     div[data-testid="stInfo"] {
         background-color: white;
@@ -44,11 +48,11 @@ st.markdown(
         border-radius: 10px;
         padding: 0.7rem 1rem;
         color: #003f5c;
-        box-shadow: 0 3px 10px rgba(255, 255, 255, 0.14);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
     }
     .stPlotlyChart > div {
         background-color: white !important;
-        box-shadow: 0 6px 16px rgba(255, 255, 255, 0.16);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
         border-radius: 12px;
         overflow: hidden;
     }
@@ -105,18 +109,7 @@ def load_data() -> pd.DataFrame:
 
 
 def main() -> None:
-    st.title("Auto Insurance Claims Explorer")
-    st.markdown(
-        "<div style='padding: 0.2rem 0 1rem 0;'><h4 style='color:#ffffff; margin:0;'>Auto insurance claims dashboard for portfolio storytelling</h4></div>",
-        unsafe_allow_html=True,
-    )
-    st.write(
-        "This dashboard explores auto accident patterns from the insurance claims dataset and highlights key trends for a portfolio presentation."
-    )
-
     df = load_data()
-
-    st.caption(f"Loaded {df.shape[0]} rows and {df.shape[1]} columns.")
 
     st.sidebar.header("Filters")
     filtered_df = df.copy()
@@ -133,13 +126,30 @@ def main() -> None:
         if selected_severities:
             filtered_df = filtered_df[filtered_df["incident_severity"].astype(str).isin(selected_severities)]
 
+    selected_date_range = None
     if "incident_date" in filtered_df.columns:
-        valid_dates = filtered_df["incident_date"].dropna()
-        if not valid_dates.empty:
-            date_range_text = (
-                f"{valid_dates.min().strftime('%b %d, %Y')} to {valid_dates.max().strftime('%b %d, %Y')}"
+        date_values = pd.to_datetime(filtered_df["incident_date"], errors="coerce").dropna()
+        if not date_values.empty:
+            min_date = date_values.min().date()
+            max_date = date_values.max().date()
+            date_input_value = st.sidebar.date_input(
+                "Incident date range",
+                value=(min_date, max_date),
+                min_value=min_date,
+                max_value=max_date,
+                key="incident_date_range",
             )
-            st.info(f"Date range covered in the data: {date_range_text}")
+            if isinstance(date_input_value, tuple) and len(date_input_value) == 2:
+                start_date, end_date = date_input_value
+            else:
+                start_date = end_date = date_input_value
+
+            if start_date is not None and end_date is not None:
+                filtered_df = filtered_df[
+                    (filtered_df["incident_date"] >= pd.Timestamp(start_date))
+                    & (filtered_df["incident_date"] <= pd.Timestamp(end_date))
+                ]
+                selected_date_range = (start_date, end_date)
 
     if "selected_incident_type" not in st.session_state:
         st.session_state.selected_incident_type = None
@@ -148,38 +158,48 @@ def main() -> None:
     if "selected_claim_range" not in st.session_state:
         st.session_state.selected_claim_range = None
 
-    st.markdown(
-        "<h3 style='text-align:center; color:white; font-size:16px; font-weight:bold; margin-bottom:0.5rem;'>Key metrics</h3>",
-        unsafe_allow_html=True,
-    )
-    if st.session_state.selected_incident_type or st.session_state.selected_gender or st.session_state.selected_claim_range:
-        active_filters = []
-        if st.session_state.selected_incident_type:
-            active_filters.append(f"incident type: {st.session_state.selected_incident_type}")
-        if st.session_state.selected_gender:
-            active_filters.append(f"gender: {st.session_state.selected_gender}")
-        if st.session_state.selected_claim_range:
-            active_filters.append(
-                f"claim range: ${st.session_state.selected_claim_range[0]:,.0f} to ${st.session_state.selected_claim_range[1]:,.0f}"
-            )
-        st.caption("Active dashboard filters: " + ", ".join(active_filters))
+    if st.session_state.selected_incident_type:
+        filtered_df = filtered_df[filtered_df["incident_type"].astype(str).isin([st.session_state.selected_incident_type])]
+
+    if st.session_state.selected_gender:
+        filtered_df = filtered_df[filtered_df["gender"].astype(str).isin([st.session_state.selected_gender])]
+
+    if st.session_state.selected_claim_range is not None:
+        filtered_df = filtered_df[
+            (filtered_df["total_claim_amount"] >= st.session_state.selected_claim_range[0])
+            & (filtered_df["total_claim_amount"] <= st.session_state.selected_claim_range[1])
+        ]
+
+    date_range_text = ""
+
+    if "incident_date" in filtered_df.columns:
+        valid_dates = filtered_df["incident_date"].dropna()
+        if not valid_dates.empty:
+            date_start = valid_dates.min()
+            date_end = valid_dates.max()
+            date_range_text = f"{date_start.month}/{date_start.day}/{date_start.year} - {date_end.month}/{date_end.day}/{date_end.year}"
+
+    if date_range_text:
+        st.title(f"Auto Insurance Claims Explorer ({date_range_text})")
+    else:
+        st.title("Auto Insurance Claims Explorer")
 
     metric_col1, metric_col2, metric_col3 = st.columns(3)
 
     if "tenure_years" in filtered_df.columns:
-        metric_col1.metric("Average insured tenure", f"{filtered_df['tenure_years'].mean():.1f} years")
+        metric_col1.metric("Average Insured Tenure", f"{filtered_df['tenure_years'].mean():.1f} years")
     else:
-        metric_col1.metric("Average insured tenure", "N/A")
+        metric_col1.metric("Average Insured Tenure", "N/A")
 
     if "age" in filtered_df.columns:
-        metric_col2.metric("Average insured age", f"{filtered_df['age'].mean():.0f} years")
+        metric_col2.metric("Average Insured Age", f"{filtered_df['age'].mean():.0f} years")
     else:
-        metric_col2.metric("Average insured age", "N/A")
+        metric_col2.metric("Average Insured Age", "N/A")
 
     if "total_claim_amount" in filtered_df.columns:
-        metric_col3.metric("Average claim amount", f"${filtered_df['total_claim_amount'].mean():,.0f}")
+        metric_col3.metric("Average Claim Amount", f"${filtered_df['total_claim_amount'].mean():,.0f}")
     else:
-        metric_col3.metric("Average claim amount", "N/A")
+        metric_col3.metric("Average Claim Amount", "N/A")
 
     col1, col2 = st.columns(2)
     selected_incident_types = []
@@ -202,7 +222,8 @@ def main() -> None:
             font=dict(color="#003f5c"),
             title=dict(
                 text="Accidents by incident type",
-                x=0.5,
+                x=0,
+                xanchor="left",
                 font=dict(color="#003f5c", size=16, family="Arial Black"),
             ),
             legend=dict(font=dict(color="#003f5c")),
@@ -218,10 +239,11 @@ def main() -> None:
                 key="incident_chart",
             )
             if isinstance(incident_selection, dict):
-                for point in incident_selection.get("points", []):
-                    label = point.get("label")
-                    if label:
-                        selected_incident_types.append(str(label))
+                labels = [str(point.get("label")) for point in incident_selection.get("points", []) if point.get("label")]
+                if labels:
+                    st.session_state.selected_incident_type = labels[0]
+                else:
+                    st.session_state.selected_incident_type = None
     else:
         col1.info("The incident_type column is not available.")
 
@@ -241,7 +263,8 @@ def main() -> None:
             font=dict(color="#003f5c"),
             title=dict(
                 text="Accidents by gender",
-                x=0.5,
+                x=0,
+                xanchor="left",
                 font=dict(color="#003f5c", size=16, family="Arial Black"),
             ),
             legend=dict(font=dict(color="#003f5c")),
@@ -257,17 +280,14 @@ def main() -> None:
                 key="gender_chart",
             )
             if isinstance(gender_selection, dict):
-                for point in gender_selection.get("points", []):
-                    label = point.get("label")
-                    if label:
-                        selected_genders.append(str(label))
+                labels = [str(point.get("label")) for point in gender_selection.get("points", []) if point.get("label")]
+                if labels:
+                    st.session_state.selected_gender = labels[0]
+                else:
+                    st.session_state.selected_gender = None
     else:
         col2.info("The insured_sex column is not available.")
 
-    st.markdown(
-        "<h3 style='text-align:center; color:white; font-size:16px; font-weight:bold; margin-top:1rem; margin-bottom:0.5rem;'>Claim amount distribution</h3>",
-        unsafe_allow_html=True,
-    )
     if "total_claim_amount" in filtered_df.columns:
         claim_hist = go.Figure(
             go.Histogram(
@@ -281,7 +301,8 @@ def main() -> None:
         claim_hist.update_layout(
             title=dict(
                 text="Percentage of accidents by total claim amount",
-                x=0.5,
+                x=0,
+                xanchor="left",
                 font=dict(color="#003f5c", size=16, family="Arial Black"),
             ),
             xaxis_title=dict(text="Total claim amount", font=dict(color="#003f5c", size=16)),
@@ -316,31 +337,26 @@ def main() -> None:
                             bin_width = (value_max - value_min) / 20
                         else:
                             bin_width = 1000
-                        selected_claim_range = (x_value - bin_width / 2, x_value + bin_width / 2)
+                        st.session_state.selected_claim_range = (x_value - bin_width / 2, x_value + bin_width / 2)
+                    else:
+                        st.session_state.selected_claim_range = None
+                else:
+                    st.session_state.selected_claim_range = None
+            else:
+                st.session_state.selected_claim_range = None
     else:
         st.info("The total_claim_amount column is not available.")
 
-    if selected_incident_types:
-        st.session_state.selected_incident_type = selected_incident_types[0]
-        filtered_df = filtered_df[filtered_df["incident_type"].astype(str).isin(selected_incident_types)]
+    if "incident_date" in filtered_df.columns:
+        valid_dates = filtered_df["incident_date"].dropna()
+        if not valid_dates.empty:
+            date_start = valid_dates.min()
+            date_end = valid_dates.max()
+            date_range_text = f"{date_start.month}/{date_start.day}/{date_start.year} - {date_end.month}/{date_end.day}/{date_end.year}"
+        else:
+            date_range_text = ""
     else:
-        st.session_state.selected_incident_type = None
-
-    if selected_genders:
-        st.session_state.selected_gender = selected_genders[0]
-        filtered_df = filtered_df[filtered_df["gender"].astype(str).isin(selected_genders)]
-    else:
-        st.session_state.selected_gender = None
-
-    if selected_claim_range is not None:
-        st.session_state.selected_claim_range = selected_claim_range
-        filtered_df = filtered_df[
-            (filtered_df["total_claim_amount"] >= selected_claim_range[0])
-            & (filtered_df["total_claim_amount"] <= selected_claim_range[1])
-        ]
-    else:
-        st.session_state.selected_claim_range = None
-
+        date_range_text = ""
 
 
 if __name__ == "__main__":
