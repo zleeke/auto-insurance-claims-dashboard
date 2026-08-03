@@ -15,6 +15,7 @@ These tools are beginner-friendly and work well on a Mac.
 
 ## Recommended project approach
 1. Choose one clear dataset with a simple story.
+   - 
 2. Build a small MVP dashboard with:
    - 3 to 5 charts
    - a few KPI cards
