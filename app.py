@@ -114,18 +114,6 @@ def main() -> None:
     st.sidebar.header("Filters")
     filtered_df = df.copy()
 
-    if "policy_state" in filtered_df.columns:
-        states = sorted(filtered_df["policy_state"].dropna().astype(str).unique())
-        selected_states = st.sidebar.multiselect("Policy State", states)
-        if selected_states:
-            filtered_df = filtered_df[filtered_df["policy_state"].astype(str).isin(selected_states)]
-
-    if "incident_severity" in filtered_df.columns:
-        severities = sorted(filtered_df["incident_severity"].dropna().astype(str).unique())
-        selected_severities = st.sidebar.multiselect("Incident Severity", severities)
-        if selected_severities:
-            filtered_df = filtered_df[filtered_df["incident_severity"].astype(str).isin(selected_severities)]
-
     selected_date_range = None
     if "incident_date" in filtered_df.columns:
         date_values = pd.to_datetime(filtered_df["incident_date"], errors="coerce").dropna()
@@ -181,6 +169,18 @@ def main() -> None:
             else:
                 st.session_state["incident_date_range"] = (min_date, max_date)
                 start_date, end_date = min_date, max_date
+
+    if "policy_state" in filtered_df.columns:
+        states = sorted(filtered_df["policy_state"].dropna().astype(str).unique())
+        selected_states = st.sidebar.multiselect("Policy State", states)
+        if selected_states:
+            filtered_df = filtered_df[filtered_df["policy_state"].astype(str).isin(selected_states)]
+
+    if "incident_severity" in filtered_df.columns:
+        severities = sorted(filtered_df["incident_severity"].dropna().astype(str).unique())
+        selected_severities = st.sidebar.multiselect("Incident Severity", severities)
+        if selected_severities:
+            filtered_df = filtered_df[filtered_df["incident_severity"].astype(str).isin(selected_severities)]
 
     if "selected_incident_type" not in st.session_state:
         st.session_state.selected_incident_type = None
@@ -240,13 +240,16 @@ def main() -> None:
     if "incident_type" in filtered_df.columns:
         incident_counts = filtered_df["incident_type"].dropna().value_counts().reset_index()
         incident_counts.columns = ["incident_type", "count"]
-        incident_chart = px.pie(
+        incident_counts = incident_counts.sort_values("count", ascending=True).reset_index(drop=True)
+        incident_chart = px.bar(
             incident_counts,
-            names="incident_type",
-            values="count",
-            hole=0.45,
+            x="count",
+            y="incident_type",
+            orientation="h",
             title="Accidents by Incident Type",
-            height=320,
+            height=275,
+            color="count",
+            color_continuous_scale=[[0, "#dceaf5"], [0.5, "#4c78a8"], [1, "#003f5c"]],
         )
         incident_chart.update_layout(
             paper_bgcolor="white",
@@ -258,15 +261,17 @@ def main() -> None:
                 xanchor="left",
                 font=dict(color="#003f5c", size=16, family="Arial Black"),
             ),
-            legend=dict(font=dict(color="#003f5c")),
-            xaxis=dict(tickfont=dict(color="#003f5c")),
-            yaxis=dict(tickfont=dict(color="#003f5c")),
+            legend=dict(visible=False),
+            xaxis=dict(title="Count", tickfont=dict(color="#003f5c"), color="#003f5c"),
+            yaxis=dict(title="Incident Type", tickfont=dict(color="#003f5c"), color="#003f5c"),
+            margin=dict(l=10, r=10, t=50, b=10),
         )
+        incident_chart.update_traces(text=incident_counts["count"], textposition="outside", cliponaxis=False)
         with col1:
             incident_selection = st.plotly_chart(
                 incident_chart,
                 use_container_width=True,
-                height=320,
+                height=275,
                 on_select="rerun",
                 selection_mode="points",
                 key="incident_chart",
@@ -283,13 +288,16 @@ def main() -> None:
     if "gender" in filtered_df.columns:
         gender_counts = filtered_df["gender"].dropna().value_counts().reset_index()
         gender_counts.columns = ["gender", "count"]
-        gender_chart = px.pie(
+        gender_counts = gender_counts.sort_values("count", ascending=True).reset_index(drop=True)
+        gender_chart = px.bar(
             gender_counts,
-            names="gender",
-            values="count",
-            hole=0.45,
+            x="count",
+            y="gender",
+            orientation="h",
             title="Incidents by Gender",
-            height=320,
+            height=275,
+            color="count",
+            color_continuous_scale=[[0, "#dceaf5"], [0.5, "#4c78a8"], [1, "#003f5c"]],
         )
         gender_chart.update_layout(
             paper_bgcolor="white",
@@ -301,15 +309,17 @@ def main() -> None:
                 xanchor="left",
                 font=dict(color="#003f5c", size=16, family="Arial Black"),
             ),
-            legend=dict(font=dict(color="#003f5c")),
-            xaxis=dict(tickfont=dict(color="#003f5c")),
-            yaxis=dict(tickfont=dict(color="#003f5c")),
+            legend=dict(visible=False),
+            xaxis=dict(title="Count", tickfont=dict(color="#003f5c"), color="#003f5c"),
+            yaxis=dict(title="Gender", tickfont=dict(color="#003f5c"), color="#003f5c"),
+            margin=dict(l=10, r=10, t=50, b=10),
         )
+        gender_chart.update_traces(text=gender_counts["count"], textposition="outside", cliponaxis=False)
         with col2:
             gender_selection = st.plotly_chart(
                 gender_chart,
                 use_container_width=True,
-                height=320,
+                height=275,
                 on_select="rerun",
                 selection_mode="points",
                 key="gender_chart",
@@ -454,12 +464,12 @@ def main() -> None:
                 xaxis=dict(tickfont=dict(color="#003f5c"), tickformat="%m/%d/%Y", title="", color="#003f5c"),
                 yaxis=dict(title=dict(text="Count of Incidents", font=dict(color="#003f5c", size=16)), tickfont=dict(color="#003f5c")),
                 margin=dict(t=100, b=100),
-                height=350,
+                height=400,
             )
             st.plotly_chart(
                 line_chart,
                 use_container_width=True,
-                height=350,
+                height=400,
                 key="incident_line_chart",
             )
         else:
