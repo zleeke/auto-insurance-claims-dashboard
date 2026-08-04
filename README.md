@@ -1,63 +1,69 @@
-# Insurance Claims Dashboard
+# Auto Insurance Claims Dashboard
 
-This project is a beginner-friendly data analytics portfolio dashboard built around auto insurance claims data. The goal is to turn insurance industry knowledge into a clear, interactive analysis that can be shared on LinkedIn and shown to employers.
+This project is a polished Streamlit dashboard for exploring an auto insurance claims dataset. It is designed as a portfolio-ready analytics app that demonstrates data cleaning, interactive visualizations, and user-driven filtering in a clear, presentation-friendly interface.
 
-## Project Overview
+## What the app does
 
-This dashboard will explore auto insurance claims data to answer questions such as:
-- Which factors are associated with higher claim amounts?
-- Are certain vehicle types or regions linked to more frequent claims?
-- How do claim characteristics vary across different policy segments?
+The dashboard allows you to explore insurance claim patterns through:
 
-The project is designed to demonstrate data cleaning, analysis, visualization, and presentation skills using Python.
+- KPI cards for average insured tenure, average insured age, and average claim amount
+- Interactive bar charts for incident type and gender distributions
+- A time-series view of incidents by month, week, or day
+- Sidebar filters for date range, policy state, incident severity, and selected chart dimensions
 
 ## Dataset
 
-The project uses the following dataset:
-- Source: Kaggle - Auto Insurance Claims Data
-- Local file: data/insurance_claims.csv
+The app uses the Auto Insurance Claims dataset.
 
-This file contains insurance-related records that can be used to build charts, metrics, and filters for an interactive dashboard.
+- Source: Kaggle dataset
+- Local expected file: data/insurance_claims.csv
 
-## Tools Used
+If the CSV is not already present locally, the app will attempt to download the dataset through KaggleHub. For the smoothest local experience, place the CSV in the data folder before running the app.
+
+## Tech stack
 
 - Python
-- Pandas
-- Plotly
 - Streamlit
-- GitHub
+- Plotly
+- Pandas
+- KaggleHub
 
-## Planned Dashboard Features
+## Current project structure
 
-- KPI cards for total claims, average claim amount, and claim frequency
-- Interactive charts for claim trends and distributions
-- Filters for vehicle type, region, or other relevant fields
-- A short summary section explaining key insights
+- app.py — main Streamlit dashboard application
+- data/insurance_claims.csv — local dataset file
+- README.md — project overview and setup instructions
+- portfolio_project_plan.md — original planning notes
 
-## Local Setup
+## Local setup
 
 1. Create and activate a virtual environment:
+
    ```bash
    python3 -m venv .venv
    source .venv/bin/activate
    ```
 
-2. Install required packages:
+2. Install the required packages:
+
    ```bash
-   pip install streamlit pandas plotly
+   pip install streamlit pandas plotly kagglehub
    ```
 
-3. Run the dashboard locally:
+3. Make sure the dataset is available locally:
+
+   - Place the CSV file in the data folder as:
+
+     ```bash
+     data/insurance_claims.csv
+     ```
+
+4. Run the dashboard:
+
    ```bash
    streamlit run app.py
    ```
 
-## Project Structure
-
-- data/insurance_claims.csv
-- README.md
-- portfolio_project_plan.md
-
 ## Notes
 
-This project is intended to be a simple but polished MVP for a data portfolio. The focus is on clarity, storytelling, and making the analysis easy to understand for hiring managers and recruiters.
+This project is intended to be a simple but polished MVP for a data portfolio. The focus is on clarity, storytelling, and making the analysis easy to understand for hiring managers, recruiters, and other stakeholders.
