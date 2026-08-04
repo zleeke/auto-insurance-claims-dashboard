@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
-import kagglehub
 
 try:
     import plotly.express as px
@@ -89,19 +88,14 @@ st.markdown(
 
 @st.cache_data
 def load_data() -> pd.DataFrame:
-    """Load the insurance claims data from a local CSV first, then fall back to Kaggle."""
+    """Load the insurance claims data from a local CSV file."""
     data_path = Path("data/insurance_claims.csv")
 
-    if data_path.exists():
-        df = pd.read_csv(data_path)
-    else:
-        try:
-            kagglehub.dataset_download("buntyshah/auto-insurance-claims-data")
-            st.info("Kaggle dataset downloaded successfully. Please place the CSV in the data folder to use it locally.")
-            st.stop()
-        except Exception as exc:
-            st.error(f"Failed to load data from both local CSV and Kaggle: {exc}")
-            st.stop()
+    if not data_path.exists():
+        st.error("The dataset file was not found. Please make sure data/insurance_claims.csv exists in the app repository.")
+        st.stop()
+
+    df = pd.read_csv(data_path)
 
     numeric_columns = [
         "total_claim_amount",
