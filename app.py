@@ -1,10 +1,15 @@
 from pathlib import Path
 
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 import kagglehub
+
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+except ModuleNotFoundError:
+    st.error("Plotly is missing. Install the app dependencies from requirements.txt before running the dashboard.")
+    st.stop()
 
 
 st.set_page_config(page_title="Auto Insurance Claims Explorer", layout="wide")
