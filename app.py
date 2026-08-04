@@ -7,16 +7,22 @@ try:
     import plotly.express as px
     import plotly.graph_objects as go
     plotly_available = True
-except ModuleNotFoundError:
+    plotly_error = None
+except Exception as exc:
     px = None
     go = None
     plotly_available = False
+    plotly_error = repr(exc)
 
 
 st.set_page_config(page_title="Auto Insurance Claims Explorer", layout="wide")
 
 if not plotly_available:
-    st.warning("Plotly is unavailable in this environment, so the app is using built-in Streamlit charts as a fallback.")
+    st.error(
+        "Plotly could not be imported in this runtime, so the dashboard cannot render the Plotly bar and line charts. "
+        f"Import error: {plotly_error}"
+    )
+    st.info("This deployment needs a successful dependency install for Plotly from requirements.txt and the Python 3.11 runtime.")
 
 st.markdown(
     """
