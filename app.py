@@ -30,16 +30,33 @@ st.markdown(
         background-color: white;
         border: 1px solid #dfe6ee;
         border-radius: 12px;
-        padding: 1rem;
+        padding: 1rem 1rem 1rem 1.25rem;
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+        position: relative;
+        overflow: hidden;
+    }
+    div[data-testid="stMetric"]::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        background: linear-gradient(180deg, #4c78a8 0%, #003f5c 100%);
+        border-radius: 0 999px 999px 0;
     }
     div[data-testid="stMetric"] [data-testid="stMetricLabel"],
     div[data-testid="stMetric"] [data-testid="stMetricValue"],
     div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
         color: #003f5c;
     }
-    div[data-testid="stMetric"] [data-testid="stMetricLabel"] {
-        font-weight: 700;
+    div[data-testid="stMetric"] [data-testid="stMetricLabel"],
+    div[data-testid="stMetric"] [data-testid="stMetricLabel"] *,
+    div[data-testid="stMetricLabel"],
+    div[data-testid="stMetricLabel"] * {
+        font-weight: 900 !important;
+        font-family: "Arial Black", Arial, sans-serif !important;
+        font-size: 1rem !important;
         text-transform: capitalize;
     }
     div[data-testid="stInfo"] {
@@ -218,19 +235,19 @@ def main() -> None:
     metric_col1, metric_col2, metric_col3 = st.columns(3)
 
     if "tenure_years" in filtered_df.columns:
-        metric_col1.metric("Average Insured Tenure", f"{filtered_df['tenure_years'].mean():.1f} years")
+        metric_col1.metric("📅 Average Insured Tenure", f"{filtered_df['tenure_years'].mean():.1f} years")
     else:
-        metric_col1.metric("Average Insured Tenure", "N/A")
+        metric_col1.metric("📅 Average Insured Tenure", "N/A")
 
     if "age" in filtered_df.columns:
-        metric_col2.metric("Average Insured Age", f"{filtered_df['age'].mean():.0f} years")
+        metric_col2.metric("👤 Average Insured Age", f"{filtered_df['age'].mean():.0f} years")
     else:
-        metric_col2.metric("Average Insured Age", "N/A")
+        metric_col2.metric("👤 Average Insured Age", "N/A")
 
     if "total_claim_amount" in filtered_df.columns:
-        metric_col3.metric("Average Claim Amount", f"${filtered_df['total_claim_amount'].mean():,.0f}")
+        metric_col3.metric("💰 Average Claim Amount", f"${filtered_df['total_claim_amount'].mean():,.0f}")
     else:
-        metric_col3.metric("Average Claim Amount", "N/A")
+        metric_col3.metric("💰 Average Claim Amount", "N/A")
 
     col1, col2 = st.columns(2)
     selected_incident_types = []
@@ -254,17 +271,26 @@ def main() -> None:
         incident_chart.update_layout(
             paper_bgcolor="white",
             plot_bgcolor="white",
-            font=dict(color="#003f5c"),
+            font=dict(color="#003f5c", family="Arial", size=13),
             title=dict(
-                text="Accidents by Incident Type",
+                text="Auto Incidents by Incident Type",
                 x=0,
                 xanchor="left",
                 font=dict(color="#003f5c", size=16, family="Arial Black"),
             ),
-            legend=dict(visible=False),
-            xaxis=dict(title="Count", tickfont=dict(color="#003f5c"), color="#003f5c"),
-            yaxis=dict(title="Incident Type", tickfont=dict(color="#003f5c"), color="#003f5c"),
+            legend=dict(visible=False, font=dict(color="#003f5c")),
+            xaxis=dict(
+                title=dict(text="Count", font=dict(color="#003f5c", size=14)),
+                tickfont=dict(color="#003f5c", size=12),
+                color="#003f5c",
+            ),
+            yaxis=dict(
+                title=dict(text="Incident Type", font=dict(color="#003f5c", size=14)),
+                tickfont=dict(color="#003f5c", size=12),
+                color="#003f5c",
+            ),
             margin=dict(l=10, r=10, t=50, b=10),
+            coloraxis_showscale=False,
         )
         incident_chart.update_traces(text=incident_counts["count"], textposition="outside", cliponaxis=False)
         with col1:
@@ -294,7 +320,7 @@ def main() -> None:
             x="count",
             y="gender",
             orientation="h",
-            title="Incidents by Gender",
+            title="Auto Incidents by Gender",
             height=275,
             color="count",
             color_continuous_scale=[[0, "#dceaf5"], [0.5, "#4c78a8"], [1, "#003f5c"]],
@@ -302,17 +328,26 @@ def main() -> None:
         gender_chart.update_layout(
             paper_bgcolor="white",
             plot_bgcolor="white",
-            font=dict(color="#003f5c"),
+            font=dict(color="#003f5c", family="Arial", size=13),
             title=dict(
                 text="Incidents by Gender",
                 x=0,
                 xanchor="left",
                 font=dict(color="#003f5c", size=16, family="Arial Black"),
             ),
-            legend=dict(visible=False),
-            xaxis=dict(title="Count", tickfont=dict(color="#003f5c"), color="#003f5c"),
-            yaxis=dict(title="Gender", tickfont=dict(color="#003f5c"), color="#003f5c"),
+            legend=dict(visible=False, font=dict(color="#003f5c")),
+            xaxis=dict(
+                title=dict(text="Count", font=dict(color="#003f5c", size=14)),
+                tickfont=dict(color="#003f5c", size=12),
+                color="#003f5c",
+            ),
+            yaxis=dict(
+                title=dict(text="Gender", font=dict(color="#003f5c", size=14)),
+                tickfont=dict(color="#003f5c", size=12),
+                color="#003f5c",
+            ),
             margin=dict(l=10, r=10, t=50, b=10),
+            coloraxis_showscale=False,
         )
         gender_chart.update_traces(text=gender_counts["count"], textposition="outside", cliponaxis=False)
         with col2:
