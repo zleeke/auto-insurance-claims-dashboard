@@ -6,12 +6,17 @@ import streamlit as st
 try:
     import plotly.express as px
     import plotly.graph_objects as go
+    plotly_available = True
 except ModuleNotFoundError:
-    st.error("Plotly is missing. Install the app dependencies from requirements.txt before running the dashboard.")
-    st.stop()
+    px = None
+    go = None
+    plotly_available = False
 
 
 st.set_page_config(page_title="Auto Insurance Claims Explorer", layout="wide")
+
+if not plotly_available:
+    st.warning("Plotly is unavailable in this environment, so the app is using built-in Streamlit charts as a fallback.")
 
 st.markdown(
     """
@@ -257,56 +262,60 @@ def main() -> None:
         incident_counts = filtered_df["incident_type"].dropna().value_counts().reset_index()
         incident_counts.columns = ["incident_type", "count"]
         incident_counts = incident_counts.sort_values("count", ascending=True).reset_index(drop=True)
-        incident_chart = px.bar(
-            incident_counts,
-            x="count",
-            y="incident_type",
-            orientation="h",
-            title="Accidents by Incident Type",
-            height=275,
-            color="count",
-            color_continuous_scale=[[0, "#dceaf5"], [0.5, "#4c78a8"], [1, "#003f5c"]],
-        )
-        incident_chart.update_layout(
-            paper_bgcolor="white",
-            plot_bgcolor="white",
-            font=dict(color="#003f5c", family="Arial", size=13),
-            title=dict(
-                text="Auto Incidents by Incident Type",
-                x=0,
-                xanchor="left",
-                font=dict(color="#003f5c", size=16, family="Arial Black"),
-            ),
-            legend=dict(visible=False, font=dict(color="#003f5c")),
-            xaxis=dict(
-                title=dict(text="Count", font=dict(color="#003f5c", size=14)),
-                tickfont=dict(color="#003f5c", size=12),
-                color="#003f5c",
-            ),
-            yaxis=dict(
-                title=dict(text="Incident Type", font=dict(color="#003f5c", size=14)),
-                tickfont=dict(color="#003f5c", size=12),
-                color="#003f5c",
-            ),
-            margin=dict(l=10, r=10, t=50, b=10),
-            coloraxis_showscale=False,
-        )
-        incident_chart.update_traces(text=incident_counts["count"], textposition="outside", cliponaxis=False)
-        with col1:
-            incident_selection = st.plotly_chart(
-                incident_chart,
-                use_container_width=True,
+        if plotly_available:
+            incident_chart = px.bar(
+                incident_counts,
+                x="count",
+                y="incident_type",
+                orientation="h",
+                title="Accidents by Incident Type",
                 height=275,
-                on_select="rerun",
-                selection_mode="points",
-                key="incident_chart",
+                color="count",
+                color_continuous_scale=[[0, "#dceaf5"], [0.5, "#4c78a8"], [1, "#003f5c"]],
             )
-            if isinstance(incident_selection, dict):
-                labels = [str(point.get("label")) for point in incident_selection.get("points", []) if point.get("label")]
-                if labels:
-                    st.session_state.selected_incident_type = labels[0]
-                else:
-                    st.session_state.selected_incident_type = None
+            incident_chart.update_layout(
+                paper_bgcolor="white",
+                plot_bgcolor="white",
+                font=dict(color="#003f5c", family="Arial", size=13),
+                title=dict(
+                    text="Auto Incidents by Incident Type",
+                    x=0,
+                    xanchor="left",
+                    font=dict(color="#003f5c", size=16, family="Arial Black"),
+                ),
+                legend=dict(visible=False, font=dict(color="#003f5c")),
+                xaxis=dict(
+                    title=dict(text="Count", font=dict(color="#003f5c", size=14)),
+                    tickfont=dict(color="#003f5c", size=12),
+                    color="#003f5c",
+                ),
+                yaxis=dict(
+                    title=dict(text="Incident Type", font=dict(color="#003f5c", size=14)),
+                    tickfont=dict(color="#003f5c", size=12),
+                    color="#003f5c",
+                ),
+                margin=dict(l=10, r=10, t=50, b=10),
+                coloraxis_showscale=False,
+            )
+            incident_chart.update_traces(text=incident_counts["count"], textposition="outside", cliponaxis=False)
+            with col1:
+                incident_selection = st.plotly_chart(
+                    incident_chart,
+                    use_container_width=True,
+                    height=275,
+                    on_select="rerun",
+                    selection_mode="points",
+                    key="incident_chart",
+                )
+                if isinstance(incident_selection, dict):
+                    labels = [str(point.get("label")) for point in incident_selection.get("points", []) if point.get("label")]
+                    if labels:
+                        st.session_state.selected_incident_type = labels[0]
+                    else:
+                        st.session_state.selected_incident_type = None
+        else:
+            with col1:
+                st.bar_chart(incident_counts.set_index("incident_type")["count"])
     else:
         col1.info("The incident_type column is not available.")
 
@@ -314,56 +323,60 @@ def main() -> None:
         gender_counts = filtered_df["gender"].dropna().value_counts().reset_index()
         gender_counts.columns = ["gender", "count"]
         gender_counts = gender_counts.sort_values("count", ascending=True).reset_index(drop=True)
-        gender_chart = px.bar(
-            gender_counts,
-            x="count",
-            y="gender",
-            orientation="h",
-            title="Auto Incidents by Gender",
-            height=275,
-            color="count",
-            color_continuous_scale=[[0, "#dceaf5"], [0.5, "#4c78a8"], [1, "#003f5c"]],
-        )
-        gender_chart.update_layout(
-            paper_bgcolor="white",
-            plot_bgcolor="white",
-            font=dict(color="#003f5c", family="Arial", size=13),
-            title=dict(
-                text="Incidents by Gender",
-                x=0,
-                xanchor="left",
-                font=dict(color="#003f5c", size=16, family="Arial Black"),
-            ),
-            legend=dict(visible=False, font=dict(color="#003f5c")),
-            xaxis=dict(
-                title=dict(text="Count", font=dict(color="#003f5c", size=14)),
-                tickfont=dict(color="#003f5c", size=12),
-                color="#003f5c",
-            ),
-            yaxis=dict(
-                title=dict(text="Gender", font=dict(color="#003f5c", size=14)),
-                tickfont=dict(color="#003f5c", size=12),
-                color="#003f5c",
-            ),
-            margin=dict(l=10, r=10, t=50, b=10),
-            coloraxis_showscale=False,
-        )
-        gender_chart.update_traces(text=gender_counts["count"], textposition="outside", cliponaxis=False)
-        with col2:
-            gender_selection = st.plotly_chart(
-                gender_chart,
-                use_container_width=True,
+        if plotly_available:
+            gender_chart = px.bar(
+                gender_counts,
+                x="count",
+                y="gender",
+                orientation="h",
+                title="Auto Incidents by Gender",
                 height=275,
-                on_select="rerun",
-                selection_mode="points",
-                key="gender_chart",
+                color="count",
+                color_continuous_scale=[[0, "#dceaf5"], [0.5, "#4c78a8"], [1, "#003f5c"]],
             )
-            if isinstance(gender_selection, dict):
-                labels = [str(point.get("label")) for point in gender_selection.get("points", []) if point.get("label")]
-                if labels:
-                    st.session_state.selected_gender = labels[0]
-                else:
-                    st.session_state.selected_gender = None
+            gender_chart.update_layout(
+                paper_bgcolor="white",
+                plot_bgcolor="white",
+                font=dict(color="#003f5c", family="Arial", size=13),
+                title=dict(
+                    text="Incidents by Gender",
+                    x=0,
+                    xanchor="left",
+                    font=dict(color="#003f5c", size=16, family="Arial Black"),
+                ),
+                legend=dict(visible=False, font=dict(color="#003f5c")),
+                xaxis=dict(
+                    title=dict(text="Count", font=dict(color="#003f5c", size=14)),
+                    tickfont=dict(color="#003f5c", size=12),
+                    color="#003f5c",
+                ),
+                yaxis=dict(
+                    title=dict(text="Gender", font=dict(color="#003f5c", size=14)),
+                    tickfont=dict(color="#003f5c", size=12),
+                    color="#003f5c",
+                ),
+                margin=dict(l=10, r=10, t=50, b=10),
+                coloraxis_showscale=False,
+            )
+            gender_chart.update_traces(text=gender_counts["count"], textposition="outside", cliponaxis=False)
+            with col2:
+                gender_selection = st.plotly_chart(
+                    gender_chart,
+                    use_container_width=True,
+                    height=275,
+                    on_select="rerun",
+                    selection_mode="points",
+                    key="gender_chart",
+                )
+                if isinstance(gender_selection, dict):
+                    labels = [str(point.get("label")) for point in gender_selection.get("points", []) if point.get("label")]
+                    if labels:
+                        st.session_state.selected_gender = labels[0]
+                    else:
+                        st.session_state.selected_gender = None
+        else:
+            with col2:
+                st.bar_chart(gender_counts.set_index("gender")["count"])
     else:
         col2.info("The insured_sex column is not available.")
 
@@ -414,98 +427,102 @@ def main() -> None:
                 visible=False,
             )
 
-            line_chart = go.Figure(data=[month_trace, week_trace, day_trace])
-            line_chart.update_layout(
-                title=dict(
-                    text="Count of Auto Incidents by Week",
-                    x=0,
-                    xanchor="left",
-                    font=dict(color="#003f5c", size=16, family="Arial Black"),
-                ),
-                updatemenus=[
-                    dict(
-                        type="buttons",
-                        direction="right",
-                        x=0.5,
-                        y=-0.18,
-                        xanchor="center",
-                        yanchor="top",
-                        pad=dict(t=10, b=10, l=12, r=12),
-                        bgcolor="white",
-                        bordercolor="#003f5c",
-                        borderwidth=1,
-                        font=dict(color="#003f5c", size=13),
-                        showactive=True,
-                        active=1,
-                        buttons=[
-                            dict(
-                                label="Month",
-                                method="update",
-                                args=[
-                                    {"visible": [True, False, False]},
-                                    {
-                                        "title": "Count of Auto Incidents by Month",
-                                        "xaxis": {
-                                            "tickmode": "array",
-                                            "tickvals": grouped_month["incident_date"].tolist(),
-                                            "ticktext": [d.strftime("%b-%Y") for d in grouped_month["incident_date"]],
-                                            "tickfont": {"color": "#003f5c"},
-                                            "title": {"text": "", "font": {"color": "#003f5c"}},
-                                            "color": "#003f5c",
+            if plotly_available:
+                line_chart = go.Figure(data=[month_trace, week_trace, day_trace])
+                line_chart.update_layout(
+                    title=dict(
+                        text="Count of Auto Incidents by Week",
+                        x=0,
+                        xanchor="left",
+                        font=dict(color="#003f5c", size=16, family="Arial Black"),
+                    ),
+                    updatemenus=[
+                        dict(
+                            type="buttons",
+                            direction="right",
+                            x=0.5,
+                            y=-0.18,
+                            xanchor="center",
+                            yanchor="top",
+                            pad=dict(t=10, b=10, l=12, r=12),
+                            bgcolor="white",
+                            bordercolor="#003f5c",
+                            borderwidth=1,
+                            font=dict(color="#003f5c", size=13),
+                            showactive=True,
+                            active=1,
+                            buttons=[
+                                dict(
+                                    label="Month",
+                                    method="update",
+                                    args=[
+                                        {"visible": [True, False, False]},
+                                        {
+                                            "title": "Count of Auto Incidents by Month",
+                                            "xaxis": {
+                                                "tickmode": "array",
+                                                "tickvals": grouped_month["incident_date"].tolist(),
+                                                "ticktext": [d.strftime("%b-%Y") for d in grouped_month["incident_date"]],
+                                                "tickfont": {"color": "#003f5c"},
+                                                "title": {"text": "", "font": {"color": "#003f5c"}},
+                                                "color": "#003f5c",
+                                            },
                                         },
-                                    },
-                                ],
-                            ),
-                            dict(
-                                label="Week",
-                                method="update",
-                                args=[
-                                    {"visible": [False, True, False]},
-                                    {
-                                        "title": "Count of Auto Incidents by Week",
-                                        "xaxis": {
-                                            "tickformat": "%m/%d/%Y",
-                                            "tickfont": {"color": "#003f5c"},
-                                            "title": {"text": "", "font": {"color": "#003f5c"}},
-                                            "color": "#003f5c",
+                                    ],
+                                ),
+                                dict(
+                                    label="Week",
+                                    method="update",
+                                    args=[
+                                        {"visible": [False, True, False]},
+                                        {
+                                            "title": "Count of Auto Incidents by Week",
+                                            "xaxis": {
+                                                "tickformat": "%m/%d/%Y",
+                                                "tickfont": {"color": "#003f5c"},
+                                                "title": {"text": "", "font": {"color": "#003f5c"}},
+                                                "color": "#003f5c",
+                                            },
                                         },
-                                    },
-                                ],
-                            ),
-                            dict(
-                                label="Day",
-                                method="update",
-                                args=[
-                                    {"visible": [False, False, True]},
-                                    {
-                                        "title": "Count of Auto Incidents by Day",
-                                        "xaxis": {
-                                            "tickformat": "%m/%d/%Y",
-                                            "tickfont": {"color": "#003f5c"},
-                                            "title": {"text": "", "font": {"color": "#003f5c"}},
-                                            "color": "#003f5c",
+                                    ],
+                                ),
+                                dict(
+                                    label="Day",
+                                    method="update",
+                                    args=[
+                                        {"visible": [False, False, True]},
+                                        {
+                                            "title": "Count of Auto Incidents by Day",
+                                            "xaxis": {
+                                                "tickformat": "%m/%d/%Y",
+                                                "tickfont": {"color": "#003f5c"},
+                                                "title": {"text": "", "font": {"color": "#003f5c"}},
+                                                "color": "#003f5c",
+                                            },
                                         },
-                                    },
-                                ],
-                            ),
-                        ],
-                    )
-                ],
-                plot_bgcolor="white",
-                paper_bgcolor="white",
-                font=dict(family="Arial", size=13, color="#003f5c"),
-                legend=dict(font=dict(color="#003f5c")),
-                xaxis=dict(tickfont=dict(color="#003f5c"), tickformat="%m/%d/%Y", title="", color="#003f5c"),
-                yaxis=dict(title=dict(text="Count of Incidents", font=dict(color="#003f5c", size=16)), tickfont=dict(color="#003f5c")),
-                margin=dict(t=100, b=100),
-                height=400,
-            )
-            st.plotly_chart(
-                line_chart,
-                use_container_width=True,
-                height=400,
-                key="incident_line_chart",
-            )
+                                    ],
+                                ),
+                            ],
+                        )
+                    ],
+                    plot_bgcolor="white",
+                    paper_bgcolor="white",
+                    font=dict(family="Arial", size=13, color="#003f5c"),
+                    legend=dict(font=dict(color="#003f5c")),
+                    xaxis=dict(tickfont=dict(color="#003f5c"), tickformat="%m/%d/%Y", title="", color="#003f5c"),
+                    yaxis=dict(title=dict(text="Count of Incidents", font=dict(color="#003f5c", size=16)), tickfont=dict(color="#003f5c")),
+                    margin=dict(t=100, b=100),
+                    height=400,
+                )
+                st.plotly_chart(
+                    line_chart,
+                    use_container_width=True,
+                    height=400,
+                    key="incident_line_chart",
+                )
+            else:
+                weekly_series = grouped_week.set_index("incident_date")["count"]
+                st.line_chart(weekly_series)
         else:
             st.info("No incident dates are available to build the time series.")
     else:
