@@ -35,35 +35,6 @@ If the CSV is not already present locally, the app will attempt to download the 
 - README.md — project overview and setup instructions
 - portfolio_project_plan.md — original planning notes
 
-## Local setup
-
-1. Create and activate a virtual environment:
-
-   ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-
-2. Install the required packages:
-
-   ```bash
-   pip install streamlit pandas plotly kagglehub
-   ```
-
-3. Make sure the dataset is available locally:
-
-   - Place the CSV file in the data folder as:
-
-     ```bash
-     data/insurance_claims.csv
-     ```
-
-4. Run the dashboard:
-
-   ```bash
-   streamlit run app.py
-   ```
-
 ## Notes
 
 This project is intended to be a simple but polished MVP for a data portfolio. The focus is on clarity, storytelling, and making the analysis easy to understand for hiring managers, recruiters, and other stakeholders.
