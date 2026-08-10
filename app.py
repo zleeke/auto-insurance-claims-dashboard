@@ -209,6 +209,18 @@ def main() -> None:
         if selected_severities:
             filtered_df = filtered_df[filtered_df["incident_severity"].astype(str).isin(selected_severities)]
 
+    if "incident_type" in filtered_df.columns:
+        incident_types = sorted(filtered_df["incident_type"].dropna().astype(str).unique())
+        selected_incident_types_filter = st.sidebar.multiselect("Incident Type", incident_types)
+        if selected_incident_types_filter:
+            filtered_df = filtered_df[filtered_df["incident_type"].astype(str).isin(selected_incident_types_filter)]
+
+    if "gender" in filtered_df.columns:
+        genders = sorted(filtered_df["gender"].dropna().astype(str).unique())
+        selected_genders_filter = st.sidebar.multiselect("Gender", genders)
+        if selected_genders_filter:
+            filtered_df = filtered_df[filtered_df["gender"].astype(str).isin(selected_genders_filter)]
+
     if "selected_incident_type" not in st.session_state:
         st.session_state.selected_incident_type = None
     if "selected_gender" not in st.session_state:
@@ -345,7 +357,7 @@ def main() -> None:
                 plot_bgcolor="white",
                 font=dict(color="#003f5c", family="Arial", size=13),
                 title=dict(
-                    text="Incidents by Gender",
+                    text="Auto Incidents by Gender",
                     x=0,
                     xanchor="left",
                     font=dict(color="#003f5c", size=16, family="Arial Black"),
